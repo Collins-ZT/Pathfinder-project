@@ -10,7 +10,7 @@ import BuildingPanel from './Buildingpanel'
 import Footer from './Footer'
 import Header from './Header'
 import LocationMarker, { CenterOnLocation, CenterOnSchool } from './LocationMarker'
-import Routing from './Routing'
+import Routing, { type RouteInfo } from './Routing'
 import { getLastKnownPosition } from './LocationMarker'
 
 const CAMPUS_CENTER: [number, number] = [42.3048, -83.0654]
@@ -26,6 +26,11 @@ export default function MapView() {
   const [showResults, setShowResults] = useState(false)
   const [destination, setDestination] = useState<[number, number] | null>(null)
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null)
+  const [route, setRoute] = useState<RouteInfo | null>(null)
+  const clearDirections = () => {
+    setDestination(null)
+    setRoute(null)
+  }
 
   /*just a placeholder building to to help me design */
   const [selectedBuilding, setSelectedBuilding] = useState<any>(null)
@@ -131,8 +136,13 @@ export default function MapView() {
         {selectedBuilding && (
           <BuildingPanel
             building={selectedBuilding}
-            onClose={() => setSelectedBuilding(null)}
+            onClose={() => {
+              setSelectedBuilding(null)
+              clearDirections()
+            }}
             onGetDirections={handleGetDirections}
+            route={route}
+            onClearDirections={clearDirections}
           />
         )}
         </div>
@@ -151,7 +161,7 @@ export default function MapView() {
               <Routing
                 from={getLastKnownPosition()!}
                 to={destination}
-                onClear={() => setDestination(null)}
+                onRoute={setRoute}
               />
             )}
             {buildings.map(building => ( // this handles what happends whenyou click on the marker
@@ -173,14 +183,6 @@ export default function MapView() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
           </MapContainer>
-          {destination && (
-            <button
-              className="clear-directions-btn"
-              onClick={() => setDestination(null)}
-            >
-              ✕ Clear Directions
-            </button>
-          )}
           <WeatherOverlay weather={weather} loading={loading} error={error} />
         </div>
       </div>
