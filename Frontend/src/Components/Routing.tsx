@@ -3,13 +3,24 @@ import { useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet-routing-machine'
 
+export interface RouteStep {
+    text: string
+    distance: number
+}
+
+export interface RouteInfo {
+    distance: number // metres
+    time: number     // seconds
+    steps: RouteStep[]
+}
+
 interface Props {
     from: [number, number]
     to: [number, number]
-    onClear: () => void
+    onRoute: (route: RouteInfo) => void
 }
 
-export default function Routing({ from, to, onClear }: Props) {
+export default function Routing({ from, to, onRoute }: Props) {
     const map = useMap()
 
     useEffect(() => {
@@ -26,6 +37,17 @@ export default function Routing({ from, to, onClear }: Props) {
             },
             createMarker: () => null
         }).addTo(map)
+
+        // grab the turn-by-turn steps so the building panel can show them
+        control.on('routesfound', (e: any) => {
+            const route = e.routes[0]
+            onRoute({
+                distance: route.summary.totalDistance,
+                time: route.summary.totalTime,
+                steps: route.instructions.map((i: any) => ({ text: i.text, distance: i.distance }))
+            })
+        })
+
         return () => {
             try {
             if (map && control) {
